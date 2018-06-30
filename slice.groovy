@@ -858,7 +858,22 @@ ISlice se = new ISlice (){
 	};
 
 ISlice se2 =new ISlice (){
-
+	ArrayList<Line3D> showEdges(ArrayList<Edge> edges,double offset, javafx.scene.paint.Color color ){
+		
+		 ArrayList<Line3D> lines =[]
+		for(Edge e: edges){
+			
+			double z=offset
+			p1 = new Vector3d(e.getP1().x,e.getP1().y,z)
+			p2 = new Vector3d(e.getP2().x,e.getP2().y,z)
+			Line3D line = new Line3D(p1,p2);
+			line.setStrokeWidth(0.8);
+			line.setStroke(color);
+			lines .add(line);
+			BowlerStudioController.getBowlerStudio() .addNode(line)
+		}
+		return lines
+	}
 	def toPixMap(def slicePart){
 		
 		//BowlerStudioController.getBowlerStudio() .addObject((Object)slicePart.movez(1),(File)null)
@@ -882,11 +897,13 @@ ISlice se2 =new ISlice (){
 		double scaleX = slicePart.getTotalX()/xPix
 		double scaleY = slicePart.getTotalY()/yPix
 
-		//println "Image x=" +xPix+" by y="+yPix+" at x="+xOffset+" y="+yOffset
+		println "Image x=" +xPix+" by y="+yPix+" at x="+xOffset+" y="+yOffset
 		
 		double imageOffset =180.0
 		double imageOffsetMotion =imageOffset*scaleX/2
-		WritableImage obj_img = new WritableImage((int)(xPix+imageOffset), (int)(yPix+imageOffset));
+		def imgx =(int)(xPix+imageOffset)
+		def imgy = (int)(yPix+imageOffset)
+		WritableImage obj_img = new WritableImage(imgx,imgy);
 		//int snWidth = (int) 4096;
 		//int snHeight = (int) 4096;
 
@@ -924,38 +941,24 @@ ISlice se2 =new ISlice (){
 		//println "Find boundries "
 		ImageView sliceImage = new ImageView(obj_img);
 		sliceImage.getTransforms().add(javafx.scene.transform.Transform.translate(xOffset-imageOffsetMotion, yOffset-imageOffsetMotion));
-		sliceImage.getTransforms().add(javafx.scene.transform.Transform.scale(scaleX,scaleY ));
+		sliceImage.getTransforms().add(javafx.scene.transform.Transform.scale(scaleX,scaleX ));
 		BowlerStudioController.getBowlerStudio() .addNode(sliceImage)
-		return [obj_img,scaleX,xOffset,scaleY,yOffset,imageOffsetMotion,imageOffset]
+		return [obj_img,scaleX,xOffset-imageOffsetMotion,scaleY,yOffset-imageOffsetMotion,imageOffsetMotion,imageOffset]
 	}
 
-/**
-	 * An interface for slicking CSG objects into lists of points that can be extruded back out
-	 * @param incoming			  Incoming CSG to be sliced
-	 * @param slicePlane		  Z coordinate of incoming CSG to slice at
-	 * @param normalInsetDistance Inset for sliced output
-	 * @return					  A set of polygons defining the sliced shape
-	 */
-	List<Polygon> slice(CSG incoming, Transform slicePlane, double normalInsetDistance){
-		List<Polygon> rawPolygons = new ArrayList<>();
+	def pixelBlack(def absX, def absY,def obj_img,def xOff, def yOff, def scaleX,def scaleY){
+		def pixX = (absX-xOff)/scaleX
+		def pixY = (absY-yOff)/scaleY
+		def pixelReader = obj_img.getPixelReader();
+		def color = pixelReader.getColor((int)pixX,(int) pixY);
+		def value = color.getRed()+color.getGreen()+color.getBlue()
+		if(value>0)
+			return false
+		println( ((int)pixX)+ " "+((int)pixY)+ " "+value)
+		return true
+	}
+	def SVGCascade(def parts,def slicePart){
 		long start = System.currentTimeMillis()
-		// Actual slice plane
-		CSG planeCSG = incoming.getBoundingBox()
-				.toZMin();
-		// Loop over each polygon in the slice of the incoming CSG
-		// Add the polygon to the final slice if it lies entirely in the z plane
-		//println "Preparing CSG slice"
-		CSG slicePart =incoming
-				.transformed(slicePlane)
-				.intersect(planeCSG)
-		for(Polygon p: slicePart						
-				.getPolygons()){
-			if(Slice.isPolygonAtZero(p)){
-				rawPolygons.add(p);
-			}
-		}
-		
-		def parts= toPixMap( slicePart)
 		def obj_img = parts[0]
 		def scaleX = parts[1]
 		def xOffset=parts[2]
@@ -963,7 +966,6 @@ ISlice se2 =new ISlice (){
 		def yOffset=parts[4]
 		def imageOffset =parts[5]
 		def imageOffsetMotion=parts[6]
-
 		double MMTOPX = 3.5409643774783404*100;
 		float outputScale = (float) (MMTOPX)
 		// Options
@@ -1121,6 +1123,56 @@ ISlice se2 =new ISlice (){
 		//println svg
 		//BowlerStudioController.getBowlerStudio() .addObject((Object)okParts,(File)null)
 		return 	okParts
+	}
+/**
+	 * An interface for slicking CSG objects into lists of points that can be extruded back out
+	 * @param incoming			  Incoming CSG to be sliced
+	 * @param slicePlane		  Z coordinate of incoming CSG to slice at
+	 * @param normalInsetDistance Inset for sliced output
+	 * @return					  A set of polygons defining the sliced shape
+	 */
+	List<Polygon> slice(CSG incoming, Transform slicePlane, double normalInsetDistance){
+		List<Polygon> rawPolygons = new ArrayList<>();
+		
+		// Actual slice plane
+		CSG planeCSG = incoming.getBoundingBox()
+				.toZMin();
+		// Loop over each polygon in the slice of the incoming CSG
+		// Add the polygon to the final slice if it lies entirely in the z plane
+		//println "Preparing CSG slice"
+		CSG slicePart =incoming
+				.transformed(slicePlane)
+				.intersect(planeCSG)
+		for(Polygon p: slicePart						
+				.getPolygons()){
+			if(Slice.isPolygonAtZero(p)){
+				rawPolygons.add(p);
+			}
+		}
+		
+		def parts= toPixMap( slicePart)
+		def obj_img = parts[0]
+		def scaleX = parts[1]
+		def xOffset=parts[2]
+		def scaleY = parts[3]
+		def yOffset=parts[4]
+		def imageOffset =parts[5]
+		def imageOffsetMotion=parts[6]
+
+		def points = []
+		for(def p:rawPolygons){
+			for(def v:p.vertices){
+				points.add(v.pos)
+				pixelBlack(v.pos.x,v.pos.y,obj_img,xOffset,yOffset,scaleX,scaleY)
+			}
+		}
+
+		
+
+		
+		def okParts =[]
+
+		return okParts
 	}
 }
 Slice.setSliceEngine(se2)
