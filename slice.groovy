@@ -945,8 +945,11 @@ ISlice se2 =new ISlice (){
 		BowlerStudioController.getBowlerStudio() .addNode(sliceImage)
 		return [obj_img,scaleX,xOffset-imageOffsetMotion,scaleY,yOffset-imageOffsetMotion,imageOffsetMotion,imageOffset]
 	}
-
+	def toPixels(def absX, def absY,def xOff, def yOff, def scaleX,def scaleY){
+		return [(absX-xOff)/scaleX,(absY-yOff)/scaleY]
+	}
 	def pixelBlack(def absX, def absY,def obj_img,def xOff, def yOff, def scaleX,def scaleY){
+		def pixPats=toPixels(absX,absY,def xOff, def yOff, def scaleX,def scaleY)
 		def pixX = (absX-xOff)/scaleX
 		def pixY = (absY-yOff)/scaleY
 		def pixelReader = obj_img.getPixelReader();
