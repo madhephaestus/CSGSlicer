@@ -50,7 +50,7 @@ import javafx.stage.Stage;
 println "Loading slicer"
 
 ISlice se2 =new ISlice (){
-	double sizeinPixelSpace =512
+	double sizeinPixelSpace =1024
 	def readers=new HashMap<>()
 	def pixelData=new HashMap<>()
 	def usedPixels=[]
@@ -305,6 +305,7 @@ ISlice se2 =new ISlice (){
 		readers.clear()
 		pixelData.clear
 	     usedPixels.clear()
+	     BowlerStudioController.getBowlerStudio().getJfx3dmanager().clearUserNode()
 		return polys
 	}
 	
