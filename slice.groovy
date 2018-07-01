@@ -50,7 +50,7 @@ import javafx.stage.Stage;
 println "Loading slicer"
 
 ISlice se2 =new ISlice (){
-	double sizeinPixelSpace =1024
+	double sizeinPixelSpace =512
 	def readers=new HashMap<>()
 	def pixelData=new HashMap<>()
 	def usedPixels=[]
@@ -137,8 +137,8 @@ ISlice se2 =new ISlice (){
 
 		//println "Find boundries "
 		ImageView sliceImage = new ImageView(obj_img);
-		sliceImage.getTransforms().add(javafx.scene.transform.Transform.translate(xOffset-imageOffsetMotion, yOffset-imageOffsetMotion));
-		sliceImage.getTransforms().add(javafx.scene.transform.Transform.scale(scaleX,scaleX ));
+		//sliceImage.getTransforms().add(javafx.scene.transform.Transform.translate(xOffset-imageOffsetMotion, yOffset-imageOffsetMotion));
+		//sliceImage.getTransforms().add(javafx.scene.transform.Transform.scale(scaleX,scaleX ));
 		BowlerStudioController.getBowlerStudio() .addNode(sliceImage)
 		return [obj_img,scaleX,xOffset-imageOffsetMotion,scaleY,yOffset-imageOffsetMotion,imageOffsetMotion,imageOffset]
 	}
@@ -179,6 +179,7 @@ ISlice se2 =new ISlice (){
 		if(Thread.interrupted()){
 			return null
 		}
+		BowlerStudioController.getBowlerStudio().getJfx3dmanager().clearUserNode()
 		List<Polygon> rawPolygons = new ArrayList<>();
 		
 		// Actual slice plane
@@ -243,7 +244,7 @@ ISlice se2 =new ISlice (){
 		while((pixelVersionOfPoints.size()>0||listOfPointsForThisPoly.size()>0)&& !Thread.interrupted()){
 			
 			def results= searchNext(nextPoint,obj_img,lastSearchIndex)
-			println "Searching "+results
+			//println "Searching "+results
 			if(results==null){
 				listOfPointsForThisPoly=[]
 				if(pixelVersionOfPoints.size()>0){
@@ -262,7 +263,6 @@ ISlice se2 =new ISlice (){
 			def toRemove = pixelVersionOfPoints.findAll{ withinAPix(nextPoint,it)}
 			if(toRemove.size()>0){
 					//println "Found "+toRemove
-					
 					for(def d:toRemove){
 						showPoints([d],30,javafx.scene.paint.Color.GREEN)
 						pixelVersionOfPoints.remove(d)
@@ -324,7 +324,7 @@ ISlice se2 =new ISlice (){
 		for(int i=-searchSize+1;i<searchSize+1;i++){
 			 locations.add([pixStart[0]+i,pixStart[1]-searchSize])
 		}
-		//println locations
+		//println "\t\t "+locations
 		int searchArraySize=locations.size()
 		if(lastSearchIndex>=searchArraySize){
 			lastSearchIndex=0
@@ -333,9 +333,8 @@ ISlice se2 =new ISlice (){
 		if (end<0)
 			end = searchArraySize-1
 		// rotate throught he data looking for  CCW edge
-		for(int i=lastSearchIndex;i!=end && !Thread.interrupted();i++){
-			if(i>=searchArraySize)
-				i=0
+		for(int i=lastSearchIndex;i!=end && !Thread.interrupted();(i=(i+1>=searchArraySize?0:i+1))){
+			//println "\t\t "+i+" start = " +lastSearchIndex+" end = "+end+" array size = "+searchArraySize
 			def counterCW = i-1
 			if(counterCW<0)
 				counterCW	= searchArraySize-1
@@ -369,7 +368,7 @@ ISlice se2 =new ISlice (){
 		
 	}
 	def withinAPix(def incoming, def out){
-		int pixSize=1
+		int pixSize=2
 		for(int i=-pixSize;i<pixSize+1;i++){
 			int x=incoming[0]+i
 			for(int j=-pixSize;j<pixSize+1;j++){
