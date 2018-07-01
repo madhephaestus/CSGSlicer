@@ -185,6 +185,12 @@ ISlice se2 =new ISlice (){
 		// Actual slice plane
 		CSG planeCSG = incoming.getBoundingBox()
 				.toZMin();
+		planeCSG=planeCSG
+				.intersect(
+					planeCSG
+					.toZMax()
+					.movez(0.01)
+					)
 		// Loop over each polygon in the slice of the incoming CSG
 		// Add the polygon to the final slice if it lies entirely in the z plane
 		//println "Preparing CSG slice"
