@@ -50,7 +50,7 @@ import javafx.stage.Stage;
 println "Loading slicer"
 
 ISlice se2 =new ISlice (){
-	double sizeinPixelSpace =1024
+	double sizeinPixelSpace =512
 	def readers=new HashMap<>()
 	def pixelData=new HashMap<>()
 	def usedPixels=[]
