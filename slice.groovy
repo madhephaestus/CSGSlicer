@@ -88,8 +88,8 @@ ISlice se2 =new ISlice (){
 		double size =sizeinPixelSpace*(mySize/200)*(polys.size()/300)
 		if(size<200)
 			size=200
-		if(size>2000)
-			size = 2000
+		if(size>3000)
+			size = 3000
 		println "Vectorizing "+polys.size()+" polygons at pixel resolution: "+size
 		
 		xPix = size*(ratioOrentation?1.0:ratio);
@@ -322,6 +322,7 @@ ISlice se2 =new ISlice (){
 		pixelData.clear
 	     usedPixels.clear()
 	     //if(display)BowlerStudioController.getBowlerStudio().getJfx3dmanager().clearUserNode()
+	     BowlerStudioController.getBowlerStudio() .addObject(polys, new File("."))
 		return polys
 	}
 	
