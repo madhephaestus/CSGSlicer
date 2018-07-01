@@ -54,22 +54,7 @@ ISlice se2 =new ISlice (){
 	def readers=new HashMap<>()
 	def pixelData=new HashMap<>()
 	def usedPixels=[]
-	ArrayList<Line3D> showEdges(ArrayList<Edge> edges,double offset, javafx.scene.paint.Color color ){
-		
-		 ArrayList<Line3D> lines =[]
-		for(Edge e: edges){
-			
-			double z=offset
-			p1 = new Vector3d(e.getP1().x,e.getP1().y,z)
-			p2 = new Vector3d(e.getP2().x,e.getP2().y,z)
-			Line3D line = new Line3D(p1,p2);
-			line.setStrokeWidth(0.8);
-			line.setStroke(color);
-			lines .add(line);
-			BowlerStudioController.getBowlerStudio() .addNode(line)
-		}
-		return lines
-	}
+
 	ArrayList<Line3D> showPoints(def edges,def offset=5, def color=javafx.scene.paint.Color.RED ){
 		
 		 ArrayList<Line3D> lines =[]
@@ -191,6 +176,9 @@ ISlice se2 =new ISlice (){
 	 * @return					  A set of polygons defining the sliced shape
 	 */
 	List<Polygon> slice(CSG incoming, Transform slicePlane, double normalInsetDistance){
+		if(Thread.interrupted()){
+			return null
+		}
 		List<Polygon> rawPolygons = new ArrayList<>();
 		
 		// Actual slice plane
@@ -253,15 +241,18 @@ ISlice se2 =new ISlice (){
 		showPoints([nextPoint],20,javafx.scene.paint.Color.ORANGE)
 		int lastSearchIndex = 0
 		while((pixelVersionOfPoints.size()>0||listOfPointsForThisPoly.size()>0)&& !Thread.interrupted()){
+			
 			def results= searchNext(nextPoint,obj_img,lastSearchIndex)
+			println "Searching "+results
 			if(results==null){
 				listOfPointsForThisPoly=[]
 				if(pixelVersionOfPoints.size()>0){
 					pixStart = pixelVersionOfPoints.remove(0)
 					nextPoint = pixStart	
 					listOfPointsForThisPoly=[nextPoint]
-					showPoints([nextPoint],20,javafx.scene.paint.Color.ORANGE)	
-				}
+					showPoints([nextPoint],40,javafx.scene.paint.Color.BLACK)	
+				}else
+					break;
 				continue;
 			}
 			nextPoint=results[0]
@@ -335,11 +326,14 @@ ISlice se2 =new ISlice (){
 		}
 		//println locations
 		int searchArraySize=locations.size()
+		if(lastSearchIndex>=searchArraySize){
+			lastSearchIndex=0
+		}
 		int end = lastSearchIndex-1
 		if (end<0)
 			end = searchArraySize-1
 		// rotate throught he data looking for  CCW edge
-		for(int i=lastSearchIndex;i!=end;i++){
+		for(int i=lastSearchIndex;i!=end && !Thread.interrupted();i++){
 			if(i>=searchArraySize)
 				i=0
 			def counterCW = i-1
@@ -375,7 +369,7 @@ ISlice se2 =new ISlice (){
 		
 	}
 	def withinAPix(def incoming, def out){
-		int pixSize=2
+		int pixSize=1
 		for(int i=-pixSize;i<pixSize+1;i++){
 			int x=incoming[0]+i
 			for(int j=-pixSize;j<pixSize+1;j++){
