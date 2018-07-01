@@ -152,8 +152,8 @@ ISlice se2 =new ISlice (){
 
 		//println "Find boundries "
 		ImageView sliceImage = new ImageView(obj_img);
-		//sliceImage.getTransforms().add(javafx.scene.transform.Transform.translate(xOffset-imageOffsetMotion, yOffset-imageOffsetMotion));
-		//sliceImage.getTransforms().add(javafx.scene.transform.Transform.scale(scaleX,scaleX ));
+		sliceImage.getTransforms().add(javafx.scene.transform.Transform.translate(xOffset-imageOffsetMotion, yOffset-imageOffsetMotion));
+		sliceImage.getTransforms().add(javafx.scene.transform.Transform.scale(scaleX,scaleX ));
 		BowlerStudioController.getBowlerStudio() .addNode(sliceImage)
 		return [obj_img,scaleX,xOffset-imageOffsetMotion,scaleY,yOffset-imageOffsetMotion,imageOffsetMotion,imageOffset]
 	}
@@ -468,11 +468,10 @@ ISlice se2 =new ISlice (){
 			
 		}
 		
-		def okParts =[]
 		readers.clear()
 		pixelData.clear
 	     usedPixels.clear()
-		return okParts
+		return polys
 	}
 	def searchNext(def pixStart,def obj_img,def lastSearchIndex){
 	
@@ -588,12 +587,12 @@ Transform slicePlane = new Transform()
 
 //Image ruler = AssetFactory.loadAsset("BowlerStudio-Icon.png");
 //ImageView rulerImage = new ImageView(ruler);
-//slices = Slice.slice(carrot.prepForManufacturing(),slicePlane, 0)
+slices = Slice.slice(carrot.prepForManufacturing(),slicePlane, 0)
 //BowlerStudioController.getBowlerStudio().getJfx3dmanager().clearUserNode()
 slices2 = Slice.slice(carrot2.prepForManufacturing(),slicePlane, 0)
 //BowlerStudioController.getBowlerStudio().getJfx3dmanager().clearUserNode()
-//pin2 = Slice.slice(pin.prepForManufacturing(),slicePlane, 0)
-return null
+pin2 = Slice.slice(pin.prepForManufacturing(),slicePlane, 0)
+//return null
 return [carrot,
 carrot2,
 slices2,
