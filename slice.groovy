@@ -54,7 +54,7 @@ ISlice se2 =new ISlice (){
 	def readers=new HashMap<>()
 	def pixelData=new HashMap<>()
 	def usedPixels=[]
-	def display = true
+	def display = false
 	ArrayList<Line3D> showPoints(def edges,def offset=5, def color=javafx.scene.paint.Color.RED ){
 		
 		 ArrayList<Line3D> lines =[]
@@ -309,7 +309,7 @@ ISlice se2 =new ISlice (){
 			
 		}
 		if(listOfPointsForThisPoly.size()>0){
-			//println "Spare Polygon Found!"
+			println "Spare Polygon Found!"
 			//Thread.sleep(1000)
 			def p =listOfPointsForThisPoly.collect{
 				return new Vector3d((it[0]*scaleX)+xOffset,(it[1]*scaleY)+yOffset,0)
@@ -321,7 +321,7 @@ ISlice se2 =new ISlice (){
 		readers.clear()
 		pixelData.clear
 	     usedPixels.clear()
-	     if(display)BowlerStudioController.getBowlerStudio().getJfx3dmanager().clearUserNode()
+	     //if(display)BowlerStudioController.getBowlerStudio().getJfx3dmanager().clearUserNode()
 		return polys
 	}
 	
@@ -330,7 +330,7 @@ ISlice se2 =new ISlice (){
 		int index=1
 		def ret = searchNextDepth(pixStart,obj_img,index,lastSearchIndex)
 		
-		while(ret == null && index++<6){
+		while(ret == null && index++<20){
 			ret = searchNextDepth(pixStart,obj_img,index,lastSearchIndex)
 		}
 		return ret
@@ -352,7 +352,7 @@ ISlice se2 =new ISlice (){
 		for(int i=-searchSize+1;i<searchSize+1;i++){
 			 locations.add([pixStart[0]+i,pixStart[1]-searchSize])
 		}
-		//println "\t\t "+locations
+		//if(searchSize>2)println "\t\t "+searchSize
 		int searchArraySize=locations.size()
 		if(lastSearchIndex>=searchArraySize){
 			lastSearchIndex=0
