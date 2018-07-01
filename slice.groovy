@@ -222,8 +222,8 @@ ISlice se2 =new ISlice (){
 		def imageOffsetMotion=parts[6]
 
 		def points = []
-		for(def p:rawPolygons){
-			for(def v:p.vertices){
+		rawPolygons.collect{
+			for(def v:it.vertices){
 				points.add(v.pos)
 				//pixelBlack(v.pos.x,v.pos.y,obj_img,xOffset,yOffset,scaleX,scaleY)
 			}
