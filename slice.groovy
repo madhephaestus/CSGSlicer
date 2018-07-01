@@ -86,8 +86,8 @@ ISlice se2 =new ISlice (){
 		double mySize = slicePart.getTotalX()>slicePart.getTotalY()?slicePart.getTotalX():slicePart.getTotalY()
 		
 		double size =sizeinPixelSpace*(mySize/200)
-		if(size<320)
-			size=320
+		if(size<200)
+			size=200
 		if(size>4096)
 			size = 4096
 		println "Vectorizing at "+size
