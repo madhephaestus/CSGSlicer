@@ -272,8 +272,8 @@ ISlice se2 =new ISlice (){
 			}else{
 				if(listOfPointsForThisPoly.size()>2){
 					if(withinAPix(nextPoint,pixStart)){
-						println "Closed Polygon Found!"
-						Thread.sleep(1000)
+						//println "Closed Polygon Found!"
+						//Thread.sleep(1000)
 						def p =listOfPointsForThisPoly.collect{
 							return new Vector3d((it[0]*scaleX)+xOffset,(it[1]*scaleY)+yOffset,0)
 						}
@@ -293,8 +293,8 @@ ISlice se2 =new ISlice (){
 			
 		}
 		if(listOfPointsForThisPoly.size()>0){
-			println "Spare Polygon Found!"
-			Thread.sleep(1000)
+			//println "Spare Polygon Found!"
+			//Thread.sleep(1000)
 			def p =listOfPointsForThisPoly.collect{
 				return new Vector3d((it[0]*scaleX)+xOffset,(it[1]*scaleY)+yOffset,0)
 			}
