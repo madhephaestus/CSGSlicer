@@ -50,7 +50,10 @@ import javafx.stage.Stage;
 println "Loading slicer"
 
 ISlice se2 =new ISlice (){
+	double sizeinPixelSpace =1024
 	def readers=new HashMap<>()
+	def pixelData=new HashMap<>()
+	def usedPixels=[]
 	ArrayList<Line3D> showEdges(ArrayList<Edge> edges,double offset, javafx.scene.paint.Color color ){
 		
 		 ArrayList<Line3D> lines =[]
@@ -95,7 +98,7 @@ ISlice se2 =new ISlice (){
 		//println "ratio is "+ ratio
 		LengthParameter printerOffset 			= new LengthParameter("printerOffset",0.5,[1.2,0])
 		double scalePixel = 0.25
-		double size =1024
+		double size =sizeinPixelSpace
 		
 		
 		xPix = size*(ratioOrentation?1.0:ratio);
@@ -162,14 +165,7 @@ ISlice se2 =new ISlice (){
 			readers.put(obj_img,obj_img.getPixelReader())
 		}
 		def pixelReader = readers.get(obj_img);
-		def color = pixelReader.getColor((int)absX,(int) absY);
-
-		def value = color.getOpacity()
-		//println( ((int)absX)+ " "+((int)absY)+ " "+value+" "+color)
-		if(value==0){
-			return false
-		}
-		return true
+		return pixelReader.getColor((int)absX,(int) absY).getOpacity()!=0;
 	}
 	def pixelEdge(def absX, def absY,def obj_img){
 		for(int i=-1;i<2;i++){
@@ -415,20 +411,35 @@ ISlice se2 =new ISlice (){
 			}
 		}
 		pixelVersionOfPoints=pixelVersionOfPointsFiltered
-		showPoints(pixelVersionOfPoints)
+		//showPoints(pixelVersionOfPoints)
 		def pixStart = pixelVersionOfPoints.get(0)
 		pixelVersionOfPoints.remove(0)
 		def nextPoint = pixStart
 		def listOfPointsForThisPoly = [pixStart]
-		showPoints([nextPoint],30,javafx.scene.paint.Color.ORANGE)
+		//showPoints([nextPoint],20,javafx.scene.paint.Color.ORANGE)
+		int lastSearchIndex = 0
 		while((pixelVersionOfPoints.size()>0||listOfPointsForThisPoly.size()>0)&& !Thread.interrupted()){
-			nextPoint= searchNext(nextPoint,obj_img)
-			showPoints([nextPoint],2,javafx.scene.paint.Color.YELLOW)
-			Thread.sleep(1)
+			def results= searchNext(nextPoint,obj_img,lastSearchIndex)
+			if(results==null){
+				listOfPointsForThisPoly=[]
+				if(pixelVersionOfPoints.size()>0){
+					pixStart = pixelVersionOfPoints.remove(0)
+					nextPoint = pixStart	
+					listOfPointsForThisPoly=[nextPoint]
+					//showPoints([nextPoint],20,javafx.scene.paint.Color.ORANGE)	
+				}
+				continue;
+			}
+			nextPoint=results[0]
+			lastSearchIndex=results[1]
+			//showPoints([nextPoint],2,javafx.scene.paint.Color.YELLOW)
+			//Thread.sleep(10)
 			def toRemove = pixelVersionOfPoints.findAll{ withinAPix(nextPoint,it)}
 			if(toRemove.size()>0){
 					//println "Found "+toRemove
+					
 					for(def d:toRemove){
+						//showPoints([d],30,javafx.scene.paint.Color.GREEN)
 						pixelVersionOfPoints.remove(d)
 						listOfPointsForThisPoly.add(d)
 					}
@@ -436,7 +447,8 @@ ISlice se2 =new ISlice (){
 			}else{
 				if(listOfPointsForThisPoly.size()>2){
 					if(withinAPix(nextPoint,pixStart)){
-						println "Closed Polygon Found!"
+						//println "Closed Polygon Found!"
+						//Thread.sleep(1000)
 						def p =listOfPointsForThisPoly.collect{
 							return new Vector3d((it[0]*scaleX)+xOffset,(it[1]*scaleY)+yOffset,0)
 						}
@@ -449,7 +461,7 @@ ISlice se2 =new ISlice (){
 							nextPoint = pixStart	
 							listOfPointsForThisPoly=[nextPoint]
 						}
-						showPoints([nextPoint],30,javafx.scene.paint.Color.ORANGE)				
+						//showPoints([nextPoint],20,javafx.scene.paint.Color.ORANGE)				
 					}
 				}
 			}
@@ -458,21 +470,27 @@ ISlice se2 =new ISlice (){
 		
 		def okParts =[]
 		readers.clear()
+		pixelData.clear
+	     usedPixels.clear()
 		return okParts
 	}
-	def searchNext(def pixStart,def obj_img){
+	def searchNext(def pixStart,def obj_img,def lastSearchIndex){
 	
-		def ret = searchNextDepth(pixStart,obj_img,1)
+		def ret = searchNextDepth(pixStart,obj_img,1,lastSearchIndex)
 		if (ret==null)
-			ret = searchNextDepth(pixStart,obj_img,2)
+			ret = searchNextDepth(pixStart,obj_img,2,lastSearchIndex)
+		if (ret==null)
+			ret = searchNextDepth(pixStart,obj_img,3,lastSearchIndex)
 		return ret
 		 
 	}
-	def searchNextDepth(def pixStart,def obj_img,def searchSize){
+	def searchNextDepth(def pixStart,def obj_img,def searchSize,def lastSearchIndex){
 		def locations=[]
+		// arrange the pixels in the data array based on a CCW search
 		for(int i=-searchSize;i<searchSize+1;i++){
 			 locations.add([pixStart[0]+searchSize,pixStart[1]+i])
 		}
+		// after the firat loop, leave off the first index to avoid duplicates
 		for(int i=searchSize-1;i>-searchSize-1;i--){
 			 locations.add([pixStart[0]+i,pixStart[1]+searchSize])
 		}
@@ -484,8 +502,13 @@ ISlice se2 =new ISlice (){
 		}
 		//println locations
 		int searchArraySize=locations.size()
-
-		for(int i=0;i<searchArraySize;i++){
+		int end = lastSearchIndex-1
+		if (end<0)
+			end = searchArraySize-1
+		// rotate throught he data looking for  CCW edge
+		for(int i=lastSearchIndex;i!=end;i++){
+			if(i>=searchArraySize)
+				i=0
 			def counterCW = i-1
 			if(counterCW<0)
 				counterCW	= searchArraySize-1
@@ -493,13 +516,15 @@ ISlice se2 =new ISlice (){
 			def self=locations[i]
 			def w = !pixelBlack(self[0],self[1],obj_img)
 			def b = pixelBlack(ccw[0],ccw[1],obj_img)
-			if(w&&b){
+			def useMe = usedPixels.findAll{ it[0]==self[0] && it[1]==self[1]}.size()==0
+			if(w&&b&&useMe){
+				usedPixels.add(self)
 				// edge detected doing a ccw rotation search
-				return self
+				return [self,i]
 			}
 		}
 		
-	
+		/*
 		//println "From "+pixStart
 		def x= pixStart[0]
 		def y=pixStart[1]
@@ -513,6 +538,7 @@ ISlice se2 =new ISlice (){
 		def br = pixelBlack(x-1,y-1,obj_img)
 		def me = pixelBlack(x,y,obj_img)
 		println  "Ul = "+ul+" uc "+uc+" ur "+ur+" \r\nl "+l+" c "+me+" r "+r+"\r\nbl "+bl+ " bc "+bc+" br "+br
+		*/
 		
 	}
 	def withinAPix(def incoming, def out){
@@ -562,9 +588,9 @@ Transform slicePlane = new Transform()
 
 //Image ruler = AssetFactory.loadAsset("BowlerStudio-Icon.png");
 //ImageView rulerImage = new ImageView(ruler);
-slices = Slice.slice(carrot.prepForManufacturing(),slicePlane, 0)
+//slices = Slice.slice(carrot.prepForManufacturing(),slicePlane, 0)
 //BowlerStudioController.getBowlerStudio().getJfx3dmanager().clearUserNode()
-//slices2 = Slice.slice(carrot2.prepForManufacturing(),slicePlane, 0)
+slices2 = Slice.slice(carrot2.prepForManufacturing(),slicePlane, 0)
 //BowlerStudioController.getBowlerStudio().getJfx3dmanager().clearUserNode()
 //pin2 = Slice.slice(pin.prepForManufacturing(),slicePlane, 0)
 return null
