@@ -88,8 +88,8 @@ ISlice se2 =new ISlice (){
 		double size =sizeinPixelSpace*(mySize/200)*(polys.size()/300)
 		if(size<200)
 			size=200
-		if(size>3000)
-			size = 3000
+		if(size>2000)
+			size = 2000
 		println "Vectorizing "+polys.size()+" polygons at pixel resolution: "+size
 		
 		xPix = size*(ratioOrentation?1.0:ratio);
@@ -280,7 +280,7 @@ ISlice se2 =new ISlice (){
 			if(toRemove.size()>0){
 					//println "Found "+toRemove
 					for(def d:toRemove){
-						showPoints([d],30,javafx.scene.paint.Color.GREEN)
+						if(display)showPoints([d],30,javafx.scene.paint.Color.GREEN)
 						pixelVersionOfPoints.remove(d)
 						listOfPointsForThisPoly.add(d)
 					}
