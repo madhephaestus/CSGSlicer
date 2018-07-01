@@ -292,6 +292,13 @@ ISlice se2 =new ISlice (){
 			}
 			
 		}
+		if(listOfPointsForThisPoly.size()>0){
+			def p =listOfPointsForThisPoly.collect{
+				return new Vector3d((it[0]*scaleX)+xOffset,(it[1]*scaleY)+yOffset,0)
+			}
+			polys.add(Polygon.fromPoints(p))
+			BowlerStudioController.getBowlerStudio() .addObject(polys, new File("."))
+		}
 		
 		readers.clear()
 		pixelData.clear
