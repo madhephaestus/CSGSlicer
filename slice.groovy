@@ -50,7 +50,7 @@ import javafx.stage.Stage;
 println "Loading slicer"
 
 ISlice se2 =new ISlice (){
-	double sizeinPixelSpace =512
+	double sizeinPixelSpace =1024
 	def readers=new HashMap<>()
 	def pixelData=new HashMap<>()
 	def usedPixels=[]
@@ -272,8 +272,8 @@ ISlice se2 =new ISlice (){
 			}else{
 				if(listOfPointsForThisPoly.size()>2){
 					if(withinAPix(nextPoint,pixStart)){
-						//println "Closed Polygon Found!"
-						//Thread.sleep(1000)
+						println "Closed Polygon Found!"
+						Thread.sleep(1000)
 						def p =listOfPointsForThisPoly.collect{
 							return new Vector3d((it[0]*scaleX)+xOffset,(it[1]*scaleY)+yOffset,0)
 						}
@@ -293,6 +293,8 @@ ISlice se2 =new ISlice (){
 			
 		}
 		if(listOfPointsForThisPoly.size()>0){
+			println "Spare Polygon Found!"
+			Thread.sleep(1000)
 			def p =listOfPointsForThisPoly.collect{
 				return new Vector3d((it[0]*scaleX)+xOffset,(it[1]*scaleY)+yOffset,0)
 			}
@@ -305,13 +307,15 @@ ISlice se2 =new ISlice (){
 	     usedPixels.clear()
 		return polys
 	}
-	def searchNext(def pixStart,def obj_img,def lastSearchIndex){
 	
-		def ret = searchNextDepth(pixStart,obj_img,1,lastSearchIndex)
-		if (ret==null)
-			ret = searchNextDepth(pixStart,obj_img,2,lastSearchIndex)
-		if (ret==null)
-			ret = searchNextDepth(pixStart,obj_img,3,lastSearchIndex)
+	def searchNext(def pixStart,def obj_img,def lastSearchIndex){
+
+		int index=1
+		def ret = searchNextDepth(pixStart,obj_img,index,lastSearchIndex)
+		
+		while(ret == null && index++<6){
+			ret = searchNextDepth(pixStart,obj_img,index,lastSearchIndex)
+		}
 		return ret
 		 
 	}
