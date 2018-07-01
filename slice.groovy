@@ -90,7 +90,7 @@ ISlice se2 =new ISlice (){
 			size=200
 		if(size>4096)
 			size = 4096
-		println "Vectorizing at "+size
+		//println "Vectorizing at "+size
 		
 		xPix = size*(ratioOrentation?1.0:ratio);
 		yPix = size*(!ratioOrentation?1.0:ratio);
@@ -100,7 +100,7 @@ ISlice se2 =new ISlice (){
 		double scaleX = slicePart.getTotalX()/xPix
 		double scaleY = slicePart.getTotalY()/yPix
 
-		println "New Slicer Image x=" +xPix+" by y="+yPix+" at x="+xOffset+" y="+yOffset
+		//println "New Slicer Image x=" +xPix+" by y="+yPix+" at x="+xOffset+" y="+yOffset
 		
 		double imageOffset =180.0
 		double imageOffsetMotion =imageOffset*scaleX/2
@@ -142,10 +142,10 @@ ISlice se2 =new ISlice (){
 		}
 
 		//println "Find boundries "
-		ImageView sliceImage = new ImageView(obj_img);
+		//ImageView sliceImage = new ImageView(obj_img);
 		//sliceImage.getTransforms().add(javafx.scene.transform.Transform.translate(xOffset-imageOffsetMotion, yOffset-imageOffsetMotion));
 		//sliceImage.getTransforms().add(javafx.scene.transform.Transform.scale(scaleX,scaleX ));
-		BowlerStudioController.getBowlerStudio() .addNode(sliceImage)
+		//BowlerStudioController.getBowlerStudio() .addNode(sliceImage)
 		return [obj_img,scaleX,xOffset-imageOffsetMotion,scaleY,yOffset-imageOffsetMotion,imageOffsetMotion,imageOffset]
 	}
 	def toPixels(def absX, def absY,def xOff, def yOff, def scaleX,def scaleY){
@@ -185,7 +185,7 @@ ISlice se2 =new ISlice (){
 		if(Thread.interrupted()){
 			return null
 		}
-		BowlerStudioController.getBowlerStudio().getJfx3dmanager().clearUserNode()
+		//BowlerStudioController.getBowlerStudio().getJfx3dmanager().clearUserNode()
 		List<Polygon> rawPolygons = new ArrayList<>();
 		
 		// Actual slice plane
@@ -251,7 +251,7 @@ ISlice se2 =new ISlice (){
 		pixelVersionOfPoints.remove(0)
 		def nextPoint = pixStart
 		def listOfPointsForThisPoly = [pixStart]
-		showPoints([nextPoint],20,javafx.scene.paint.Color.ORANGE)
+		//showPoints([nextPoint],20,javafx.scene.paint.Color.ORANGE)
 		int lastSearchIndex = 0
 		while((pixelVersionOfPoints.size()>0||listOfPointsForThisPoly.size()>0)&& !Thread.interrupted()){
 			
@@ -263,20 +263,20 @@ ISlice se2 =new ISlice (){
 					pixStart = pixelVersionOfPoints.remove(0)
 					nextPoint = pixStart	
 					listOfPointsForThisPoly=[nextPoint]
-					showPoints([nextPoint],40,javafx.scene.paint.Color.BLACK)	
+					//showPoints([nextPoint],40,javafx.scene.paint.Color.BLACK)	
 				}else
 					break;
 				continue;
 			}
 			nextPoint=results[0]
 			lastSearchIndex=results[1]
-			showPoints([nextPoint],2,javafx.scene.paint.Color.YELLOW)
+			//showPoints([nextPoint],2,javafx.scene.paint.Color.YELLOW)
 			//Thread.sleep(10)
 			def toRemove = pixelVersionOfPoints.findAll{ withinAPix(nextPoint,it)}
 			if(toRemove.size()>0){
 					//println "Found "+toRemove
 					for(def d:toRemove){
-						showPoints([d],30,javafx.scene.paint.Color.GREEN)
+						//showPoints([d],30,javafx.scene.paint.Color.GREEN)
 						pixelVersionOfPoints.remove(d)
 						listOfPointsForThisPoly.add(d)
 					}
@@ -291,14 +291,14 @@ ISlice se2 =new ISlice (){
 						}
 						polys.add(Polygon.fromPoints(p))
 						
-						BowlerStudioController.getBowlerStudio() .addObject(polys, new File("."))
+						//BowlerStudioController.getBowlerStudio() .addObject(polys, new File("."))
 						listOfPointsForThisPoly=[]
 						if(pixelVersionOfPoints.size()>0){
 							pixStart = pixelVersionOfPoints.remove(0)
 							nextPoint = pixStart	
 							listOfPointsForThisPoly=[nextPoint]
 						}
-						showPoints([nextPoint],20,javafx.scene.paint.Color.ORANGE)				
+						//showPoints([nextPoint],20,javafx.scene.paint.Color.ORANGE)				
 					}
 				}
 			}
@@ -311,13 +311,13 @@ ISlice se2 =new ISlice (){
 				return new Vector3d((it[0]*scaleX)+xOffset,(it[1]*scaleY)+yOffset,0)
 			}
 			polys.add(Polygon.fromPoints(p))
-			BowlerStudioController.getBowlerStudio() .addObject(polys, new File("."))
+			//BowlerStudioController.getBowlerStudio() .addObject(polys, new File("."))
 		}
 		
 		readers.clear()
 		pixelData.clear
 	     usedPixels.clear()
-	     BowlerStudioController.getBowlerStudio().getJfx3dmanager().clearUserNode()
+	     //BowlerStudioController.getBowlerStudio().getJfx3dmanager().clearUserNode()
 		return polys
 	}
 	
