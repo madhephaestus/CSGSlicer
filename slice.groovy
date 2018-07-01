@@ -54,7 +54,7 @@ ISlice se2 =new ISlice (){
 	def readers=new HashMap<>()
 	def pixelData=new HashMap<>()
 	def usedPixels=[]
-
+	def display = true
 	ArrayList<Line3D> showPoints(def edges,def offset=5, def color=javafx.scene.paint.Color.RED ){
 		
 		 ArrayList<Line3D> lines =[]
@@ -84,13 +84,13 @@ ISlice se2 =new ISlice (){
 		LengthParameter printerOffset 			= new LengthParameter("printerOffset",0.5,[1.2,0])
 		double scalePixel = 0.25
 		double mySize = slicePart.getTotalX()>slicePart.getTotalY()?slicePart.getTotalX():slicePart.getTotalY()
-		
-		double size =sizeinPixelSpace*(mySize/200)
+		def polys = slicePart.getPolygons()
+		double size =sizeinPixelSpace*(mySize/200)*(polys.size()/300)
 		if(size<200)
 			size=200
-		if(size>4096)
-			size = 4096
-		println "Vectorizing at pixel resolution: "+size
+		if(size>3000)
+			size = 3000
+		println "Vectorizing "+polys.size()+" polygons at pixel resolution: "+size
 		
 		xPix = size*(ratioOrentation?1.0:ratio);
 		yPix = size*(!ratioOrentation?1.0:ratio);
@@ -142,10 +142,12 @@ ISlice se2 =new ISlice (){
 		}
 
 		//println "Find boundries "
-		//ImageView sliceImage = new ImageView(obj_img);
+		if(display){
+		ImageView sliceImage = new ImageView(obj_img);
 		//sliceImage.getTransforms().add(javafx.scene.transform.Transform.translate(xOffset-imageOffsetMotion, yOffset-imageOffsetMotion));
 		//sliceImage.getTransforms().add(javafx.scene.transform.Transform.scale(scaleX,scaleX ));
-		//BowlerStudioController.getBowlerStudio() .addNode(sliceImage)
+		BowlerStudioController.getBowlerStudio() .addNode(sliceImage)
+		}
 		return [obj_img,scaleX,xOffset-imageOffsetMotion,scaleY,yOffset-imageOffsetMotion,imageOffsetMotion,imageOffset]
 	}
 	def toPixels(def absX, def absY,def xOff, def yOff, def scaleX,def scaleY){
@@ -185,7 +187,7 @@ ISlice se2 =new ISlice (){
 		if(Thread.interrupted()){
 			return null
 		}
-		//BowlerStudioController.getBowlerStudio().getJfx3dmanager().clearUserNode()
+		if(display)BowlerStudioController.getBowlerStudio().getJfx3dmanager().clearUserNode()
 		List<Polygon> rawPolygons = new ArrayList<>();
 		
 		// Actual slice plane
@@ -246,12 +248,14 @@ ISlice se2 =new ISlice (){
 			}
 		}
 		pixelVersionOfPoints=pixelVersionOfPointsFiltered
-		//showPoints(pixelVersionOfPoints)
+		if(display)showPoints(pixelVersionOfPoints)
 		def pixStart = pixelVersionOfPoints.get(0)
 		pixelVersionOfPoints.remove(0)
 		def nextPoint = pixStart
 		def listOfPointsForThisPoly = [pixStart]
-		//showPoints([nextPoint],20,javafx.scene.paint.Color.ORANGE)
+		
+		
+		if(display)showPoints([nextPoint],20,javafx.scene.paint.Color.ORANGE)
 		int lastSearchIndex = 0
 		while((pixelVersionOfPoints.size()>0||listOfPointsForThisPoly.size()>0)&& !Thread.interrupted()){
 			
@@ -263,20 +267,20 @@ ISlice se2 =new ISlice (){
 					pixStart = pixelVersionOfPoints.remove(0)
 					nextPoint = pixStart	
 					listOfPointsForThisPoly=[nextPoint]
-					//showPoints([nextPoint],40,javafx.scene.paint.Color.BLACK)	
+					if(display)showPoints([nextPoint],40,javafx.scene.paint.Color.BLACK)	
 				}else
 					break;
 				continue;
 			}
 			nextPoint=results[0]
 			lastSearchIndex=results[1]
-			//showPoints([nextPoint],2,javafx.scene.paint.Color.YELLOW)
+			if(display)showPoints([nextPoint],2,javafx.scene.paint.Color.YELLOW)
 			//Thread.sleep(10)
 			def toRemove = pixelVersionOfPoints.findAll{ withinAPix(nextPoint,it)}
 			if(toRemove.size()>0){
 					//println "Found "+toRemove
 					for(def d:toRemove){
-						//showPoints([d],30,javafx.scene.paint.Color.GREEN)
+						showPoints([d],30,javafx.scene.paint.Color.GREEN)
 						pixelVersionOfPoints.remove(d)
 						listOfPointsForThisPoly.add(d)
 					}
@@ -284,21 +288,21 @@ ISlice se2 =new ISlice (){
 			}else{
 				if(listOfPointsForThisPoly.size()>2){
 					if(withinAPix(nextPoint,pixStart)){
-						//println "Closed Polygon Found!"
+						if(display)println "Closed Polygon Found!"
 						//Thread.sleep(1000)
 						def p =listOfPointsForThisPoly.collect{
 							return new Vector3d((it[0]*scaleX)+xOffset,(it[1]*scaleY)+yOffset,0)
 						}
 						polys.add(Polygon.fromPoints(p))
 						
-						//BowlerStudioController.getBowlerStudio() .addObject(polys, new File("."))
+						if(display)BowlerStudioController.getBowlerStudio() .addObject(polys, new File("."))
 						listOfPointsForThisPoly=[]
 						if(pixelVersionOfPoints.size()>0){
 							pixStart = pixelVersionOfPoints.remove(0)
 							nextPoint = pixStart	
 							listOfPointsForThisPoly=[nextPoint]
 						}
-						//showPoints([nextPoint],20,javafx.scene.paint.Color.ORANGE)				
+						if(display)showPoints([nextPoint],20,javafx.scene.paint.Color.ORANGE)				
 					}
 				}
 			}
@@ -311,13 +315,13 @@ ISlice se2 =new ISlice (){
 				return new Vector3d((it[0]*scaleX)+xOffset,(it[1]*scaleY)+yOffset,0)
 			}
 			polys.add(Polygon.fromPoints(p))
-			//BowlerStudioController.getBowlerStudio() .addObject(polys, new File("."))
+			if(display)BowlerStudioController.getBowlerStudio() .addObject(polys, new File("."))
 		}
 		
 		readers.clear()
 		pixelData.clear
 	     usedPixels.clear()
-	     //BowlerStudioController.getBowlerStudio().getJfx3dmanager().clearUserNode()
+	     if(display)BowlerStudioController.getBowlerStudio().getJfx3dmanager().clearUserNode()
 		return polys
 	}
 	
