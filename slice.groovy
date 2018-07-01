@@ -90,7 +90,7 @@ ISlice se2 =new ISlice (){
 			size=200
 		if(size>4096)
 			size = 4096
-		//println "Vectorizing at "+size
+		println "Vectorizing at pixel resolution: "+size
 		
 		xPix = size*(ratioOrentation?1.0:ratio);
 		yPix = size*(!ratioOrentation?1.0:ratio);
