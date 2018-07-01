@@ -50,7 +50,7 @@ import javafx.stage.Stage;
 println "Loading slicer"
 
 ISlice se2 =new ISlice (){
-	double sizeinPixelSpace =1024
+	double sizeinPixelSpace =1500
 	def readers=new HashMap<>()
 	def pixelData=new HashMap<>()
 	def usedPixels=[]
@@ -83,8 +83,14 @@ ISlice se2 =new ISlice (){
 		//println "ratio is "+ ratio
 		LengthParameter printerOffset 			= new LengthParameter("printerOffset",0.5,[1.2,0])
 		double scalePixel = 0.25
-		double size =sizeinPixelSpace
+		double mySize = slicePart.getTotalX()>slicePart.getTotalY()?slicePart.getTotalX():slicePart.getTotalY()
 		
+		double size =sizeinPixelSpace*(mySize/200)
+		if(size<320)
+			size=320
+		if(size>4096)
+			size = 4096
+		println "Vectorizing at "+size
 		
 		xPix = size*(ratioOrentation?1.0:ratio);
 		yPix = size*(!ratioOrentation?1.0:ratio);
@@ -442,4 +448,4 @@ pin2 = Slice.slice(pin.prepForManufacturing(),slicePlane, 0)
 return [carrot,
 carrot2,
 slices2,
-slices]
+slices,pin2,pin]
