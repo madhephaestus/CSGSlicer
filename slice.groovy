@@ -54,7 +54,7 @@ ISlice se2 =new ISlice (){
 	def readers=new HashMap<>()
 	def pixelData=new HashMap<>()
 	def usedPixels=[]
-	def display = false
+	def display = true
 	ArrayList<Line3D> showPoints(def edges,def offset=5, def color=javafx.scene.paint.Color.RED ){
 		
 		 ArrayList<Line3D> lines =[]
@@ -331,14 +331,27 @@ ISlice se2 =new ISlice (){
 		int index=1
 		def ret = searchNextDepth(pixStart,obj_img,index,lastSearchIndex)
 		
-		while(ret == null && index++<20){
+		while(ret == null && index++<5&& !Thread.interrupted()){
 			ret = searchNextDepth(pixStart,obj_img,index,lastSearchIndex)
 		}
 		return ret
 		 
 	}
+	
 	def searchNextDepth(def pixStart,def obj_img,def searchSize,def lastSearchIndex){
 		def locations=[]
+		double inc = Math.toDegrees(Math.atan2(1,searchSize))
+		
+		for (double i=0;i<360+inc;i+=inc){
+			int x = Math.round(
+					Math.cos(Math.toRadians(i))*searchSize
+				)
+			int y = Math.round(
+					Math.sin(Math.toRadians(i))*searchSize
+				)
+			locations.add([pixStart[0]+x,pixStart[1]+y])
+		}
+		/*
 		// arrange the pixels in the data array based on a CCW search
 		for(int i=-searchSize;i<searchSize+1;i++){
 			 locations.add([pixStart[0]+searchSize,pixStart[1]+i])
@@ -353,6 +366,8 @@ ISlice se2 =new ISlice (){
 		for(int i=-searchSize+1;i<searchSize+1;i++){
 			 locations.add([pixStart[0]+i,pixStart[1]-searchSize])
 		}
+		*/
+		println inc+" "+locations
 		//if(searchSize>2)println "\t\t "+searchSize
 		int searchArraySize=locations.size()
 		if(lastSearchIndex>=searchArraySize){
