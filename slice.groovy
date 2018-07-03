@@ -54,7 +54,9 @@ ISlice se2 =new ISlice (){
 	def readers=new HashMap<>()
 	def pixelData=new HashMap<>()
 	def usedPixels=[]
-	def display = true
+	def display = false
+	def maxRes = 2000
+	def minRes = 200
 	ArrayList<Line3D> showPoints(def edges,def offset=5, def color=javafx.scene.paint.Color.RED ){
 		
 		 ArrayList<Line3D> lines =[]
@@ -86,10 +88,10 @@ ISlice se2 =new ISlice (){
 		double mySize = slicePart.getTotalX()>slicePart.getTotalY()?slicePart.getTotalX():slicePart.getTotalY()
 		def polys = slicePart.getPolygons()
 		double size =sizeinPixelSpace*(mySize/200)*(polys.size()/300)
-		if(size<200)
-			size=200
-		if(size>3000)
-			size = 3000
+		if(size<minRes)
+			size=minRes
+		if(size>maxRes)
+			size = maxRes
 		println "Vectorizing "+polys.size()+" polygons at pixel resolution: "+size
 		
 		xPix = size*(ratioOrentation?1.0:ratio);
@@ -187,6 +189,7 @@ ISlice se2 =new ISlice (){
 		if(Thread.interrupted()){
 			return null
 		}
+		def startTime = System.currentTimeMillis()
 		if(display)BowlerStudioController.getBowlerStudio().getJfx3dmanager().clearUserNode()
 		List<Polygon> rawPolygons = new ArrayList<>();
 		
@@ -293,9 +296,10 @@ ISlice se2 =new ISlice (){
 						def p =listOfPointsForThisPoly.collect{
 							return new Vector3d((it[0]*scaleX)+xOffset,(it[1]*scaleY)+yOffset,0)
 						}
-						polys.add(Polygon.fromPoints(p))
+						def polyNew= Polygon.fromPoints(p)
+						polys.add(polyNew)
 						
-						if(display)BowlerStudioController.getBowlerStudio() .addObject(polys, new File("."))
+						BowlerStudioController.getBowlerStudio() .addObject([polyNew], new File("."))
 						listOfPointsForThisPoly=[]
 						if(pixelVersionOfPoints.size()>0){
 							pixStart = pixelVersionOfPoints.remove(0)
@@ -323,16 +327,18 @@ ISlice se2 =new ISlice (){
 	     usedPixels.clear()
 	     //if(display)BowlerStudioController.getBowlerStudio().getJfx3dmanager().clearUserNode()
 	     BowlerStudioController.getBowlerStudio() .addObject(polys, new File("."))
+	     println "Slice took: "+(((double)(System.currentTimeMillis()-startTime  ))/1000.0)+" seconds"
 		return polys
 	}
 	
 	def searchNext(def pixStart,def obj_img,def lastSearchIndex){
 
-		int index=1
+		double index=1
 		def ret = searchNextDepth(pixStart,obj_img,index,lastSearchIndex)
 		
-		while(ret == null && index++<5&& !Thread.interrupted()){
-			ret = searchNextDepth(pixStart,obj_img,index,lastSearchIndex)
+		while(ret == null && index<10&& !Thread.interrupted()){
+			index+=0.5
+			ret = searchNextDepth(pixStart,obj_img,index,0)
 		}
 		return ret
 		 
@@ -341,33 +347,35 @@ ISlice se2 =new ISlice (){
 	def searchNextDepth(def pixStart,def obj_img,def searchSize,def lastSearchIndex){
 		def locations=[]
 		double inc = Math.toDegrees(Math.atan2(1,searchSize))
-		
-		for (double i=0;i<360+inc;i+=inc){
-			int x = Math.round(
-					Math.cos(Math.toRadians(i))*searchSize
-				)
-			int y = Math.round(
-					Math.sin(Math.toRadians(i))*searchSize
-				)
-			locations.add([pixStart[0]+x,pixStart[1]+y])
+		if(searchSize>2){
+			for (double i=0;i<360+inc;i+=inc){
+				int x = Math.round(
+						Math.cos(Math.toRadians(i))*searchSize
+					)
+				int y = Math.round(
+						Math.sin(Math.toRadians(i))*searchSize
+					)
+				locations.add([pixStart[0]+x,pixStart[1]+y])
+			}
+		}else{
+			
+			// arrange the pixels in the data array based on a CCW search
+			for(int i=-searchSize;i<searchSize+1;i++){
+				 locations.add([pixStart[0]+searchSize,pixStart[1]+i])
+			}
+			// after the firat loop, leave off the first index to avoid duplicates
+			for(int i=searchSize-1;i>-searchSize-1;i--){
+				 locations.add([pixStart[0]+i,pixStart[1]+searchSize])
+			}
+			for(int i=searchSize-1;i>-searchSize-1;i--){
+				 locations.add([pixStart[0]-searchSize,pixStart[1]+i])
+			}
+			for(int i=-searchSize+1;i<searchSize+1;i++){
+				 locations.add([pixStart[0]+i,pixStart[1]-searchSize])
+			}
+			
 		}
-		/*
-		// arrange the pixels in the data array based on a CCW search
-		for(int i=-searchSize;i<searchSize+1;i++){
-			 locations.add([pixStart[0]+searchSize,pixStart[1]+i])
-		}
-		// after the firat loop, leave off the first index to avoid duplicates
-		for(int i=searchSize-1;i>-searchSize-1;i--){
-			 locations.add([pixStart[0]+i,pixStart[1]+searchSize])
-		}
-		for(int i=searchSize-1;i>-searchSize-1;i--){
-			 locations.add([pixStart[0]-searchSize,pixStart[1]+i])
-		}
-		for(int i=-searchSize+1;i<searchSize+1;i++){
-			 locations.add([pixStart[0]+i,pixStart[1]-searchSize])
-		}
-		*/
-		println inc+" "+locations
+		//println inc+" "+locations
 		//if(searchSize>2)println "\t\t "+searchSize
 		int searchArraySize=locations.size()
 		if(lastSearchIndex>=searchArraySize){
@@ -391,6 +399,8 @@ ISlice se2 =new ISlice (){
 				usedPixels.add(self)
 				// edge detected doing a ccw rotation search
 				return [self,i]
+			}else{
+				if(display)showPoints([self],1,javafx.scene.paint.Color.WHITE)		
 			}
 		}
 		
@@ -464,7 +474,7 @@ slices = Slice.slice(carrot.prepForManufacturing(),slicePlane, 0)
 slices2 = Slice.slice(carrot2.prepForManufacturing(),slicePlane, 0)
 //BowlerStudioController.getBowlerStudio().getJfx3dmanager().clearUserNode()
 pin2 = Slice.slice(pin.prepForManufacturing(),slicePlane, 0)
-//return null
+return null
 return [carrot,
 carrot2,
 slices2,
